@@ -3,55 +3,59 @@ const collection = require('../src/database');
 const Users = require('../src/database');
 const routerApp = express.Router();
 
-const user = "admin";
-const pass = "password";
+
 
 routerApp.get('/',(req,res)=>{
     if(req.session.user){
-        console.log("session founded")
+        console.log("user alredy logined")
         res.redirect('/home');
     }else{
         if(req.session.passwordWrong){
             console.log("entered wrong password");
             req.session.passwordWrong=false;
-            
-            res.render('login' , {errormessage: "Inavalid password or username"})
+            res.render('login' , {message: "Inavalid password"})
+        }else if (req.session.needSignup){
+            console.log('User need signup');
+            req.session.needSignup = false;
+            res.render('login', {message: "You need to Create new account or You entered invalid username"})
         }else{
-            console.log('no session data, login please')
-            res.render('login')
+            res.render('login');
         }
     }
 })
 
-routerApp.post('/home',(req,res)=>{
-    const { username , password } = req.body;
+routerApp.post('/home', async(req,res)=>{
     
-    
-    if(username === user && password === pass ){
-        console.log(username,password,user,pass);
-        req.session.user = req.body.username;
-        console.log("the verficstion succesful");
-
-        res.redirect('/home');
-    }else{
-        
-       console.log("the verficstion failed");
-       req.session.passwordWrong = true;
-       req.session.user = false;
-        res.redirect('/');
-       
-    }
-
-    
-})
+     try{
+        const check = await Users.findOne({name: req.body.username});
+        if(check){
+            const isPasswordMatch = await Users.findOne({name : req.body.username , password : req.body.password})
+            if(isPasswordMatch){
+                req.session.user = true;
+                console.log("the verficstion succesful");
+                res.redirect('/home');
+            }else{
+                console.log("the verficstion failed ,need to send a message to user sign up page.'the message is your passsword is incorrected' ");
+                req.session.passwordWrong= true;
+                res.redirect('/');
+            }
+        }else{
+            console.log("the verficstion failed ,user dont have an acount here.need to send a message to user sign up page.'the message is your need signin for login' ");
+            req.session.needSignup = true ;
+            res.redirect('/');
+        }
+       }catch{
+            res.send("The database not working please try after sometime")
+       }
+    })
 
 routerApp.get('/home',(req,res)=>{
 
     if(req.session.user){
-        console.log("yes this time to show homw")
+        console.log("Your home is here")
         res.render('home');
     }else{
-        
+
        res.render('login')
     }
 })
@@ -66,9 +70,19 @@ routerApp.post('/signuppage',async (req,res)=>{
 })
 
 routerApp.get('/signupage',(req,res)=>{
+
     console.log("2");
-    res.render('signup');
+    if(req.session.existingUsername){
+        res.render('signup' ,{message:"This username already existing"});
+    }else if(req.session.accountCreated){
+        res.render('login' ,{message:"Your Account created ,please login now"});
+    }else{
+        res.render('signup');
+    }
+    
 })
+
+
 
 routerApp.post('/signupuser',async (req,res)=>{
     console.log("3");
@@ -76,31 +90,32 @@ routerApp.post('/signupuser',async (req,res)=>{
       name: req.body.username,
       password: req.body.password
     };
-    console.log("4");
-  
+    
     try{
-              console.log("5");
+        console.log("4");
+    // checking if the user data is already existing.
+         const existData =  await Users.findOne({name : data.name});
+        if(existData){
+            req.session.existingUsername =true;
+            console.log("Username already exists");
+            res.redirect('/signupage');
+         }else{
+        console.log("5");
         const userData = await Users.insertMany(data);        
-        res.send('your accound created');
-        console.log(userData);
-        console.log("6");
-
-    }catch(err) {
-        console.log("7");
+        console.log('your accound created');
+        req.session.accountCreated =true;
+        res.redirect('/signupage')
+         }
+        
+        }catch(err) {
+        
         console.log("THe error is " , err)
-        res.status(500).send('Error creating account');
-    }
+        return res.status(404).send('Error in creating account');
+     }
     
-    
-    
-    
-    
-    console.log("6");
-    
-    
-})
+    })
 
 
 
 
-module.exports= routerApp;
+  module.exports= routerApp;

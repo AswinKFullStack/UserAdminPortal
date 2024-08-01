@@ -2,7 +2,7 @@ const mongoose =  require("mongoose");
 const { type } = require("os");
 const { setThePassword } = require("whatwg-url");
 //const connect = mongoose.connect('mongodb://localhost:27017//UserDatabase');
-mongoose.connect('mongodb://localhost:27017/UserDatabase', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/UserDatabase');
 
 const db = mongoose.connection;
 

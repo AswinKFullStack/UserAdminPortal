@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const nocache = require('nocache');
 const routes = require('./Routers/user');
+const collection = require("./src/database")
 const app = express();
 const hbs = require('hbs');
 const PORT = 3001;

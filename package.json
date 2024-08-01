@@ -1,8 +1,15 @@
+
 {
+  "scripts":{
+  "dev": "nodemon app.js",
+  "start": "node app.js"
+},
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "hbs": "^4.2.0",
+    "mongoose": "^8.5.2",
     "nocache": "^4.0.0"
   },
   "devDependencies": {
